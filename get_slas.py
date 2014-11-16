@@ -38,7 +38,6 @@ def getResults(firstDay, lastDay):
    # Only created and resolved dates are required for the queries
    jqlCreated=('project = %s AND created >= %s AND created <= %s ORDER BY created DESC, key DESC') % (project, firstDay, lastDay)
    jqlResolved=('project = %s AND resolved >= %s AND resolved <= %s ORDER BY created DESC, key DESC') % (project, firstDay, lastDay)
-
    countCreate = 0
    countResolved = 0
    countOpen = 0
