@@ -71,15 +71,15 @@ def getCreated(firstDay, lastDay):
    for issue in jira.search_issues(jqlCreated):
       jira_key = issue.key
       summary = issue.fields.summary
-      severity = issue.fields.customfield_10030.value
+      severity = issue.fields.customfield_.value
       if "," in summary:
          summary = summary.replace(',', '')
       if issue.fields.created:
          created = parseCreated(issue.fields.created)
       else:
          sys.exit('Missing created date from %s') % ' '.join(jira_key, summary)
-      if issue.fields.customfield_11971:
-         response = issue.fields.customfield_11971.split('.')[0]
+      if issue.fields.customfield_:
+         response = issue.fields.customfield_.split('.')[0]
          response = datetime.strptime(response, '%Y-%m-%d %H:%M:%S')
       else:
          response = "None"
@@ -101,15 +101,15 @@ def getResolved(firstDay, lastDay):
    for issue in jira.search_issues(jqlResolved):
       jira_key = issue.key
       summary = issue.fields.summary
-      severity = issue.fields.customfield_10030.value
+      severity = issue.fields.customfield_.value
       if "," in summary:
          summary = summary.replace(',', '')
       if issue.fields.created:
          created = parseCreated(issue.fields.created)
       else:
          sys.exit('Missing created date from %s') % ' '.join(jira_key, summary)
-      if issue.fields.customfield_10474:
-         resolved = issue.fields.customfield_10474.split('.')[0]
+      if issue.fields.customfield_:
+         resolved = issue.fields.customfield_.split('.')[0]
          resolved = datetime.strptime(resolved, '%Y-%m-%dT%H:%M:%S')
       else:
          resolved = "None"
