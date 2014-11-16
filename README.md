@@ -6,6 +6,7 @@ JIRA SLA reporting script that calculates business hours between created date an
 It's important that you set the custom fields in the script.  The custom fields are in the JSON data for the fields:
 
 Time of first response
+
 Time of resolution
 
 If you don't have the 'Time of first response' field in JIRA then install the charting plugin 'Time of first response', it will create this field for you.  You will have to reindex JIRA afterwards.
