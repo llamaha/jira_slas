@@ -36,8 +36,8 @@ def sla(severity,timeToRespond):
 def getResults(firstDay, lastDay):
    jira = JIRA(options={'server': jiraURL}, basic_auth=(jiraUser, jiraPass))
    # Only created and resolved dates are required for the queries
-   jqlCreated=('project = %s AND issuetype = Support AND created >= %s AND created <= %s ORDER BY created DESC, key DESC') % (project, firstDay, lastDay)
-   jqlResolved=('project = %s AND issuetype = Support AND resolved >= %s AND resolved <= %s ORDER BY created DESC, key DESC') % (project, firstDay, lastDay)
+   jqlCreated=('project = %s AND created >= %s AND created <= %s ORDER BY created DESC, key DESC') % (project, firstDay, lastDay)
+   jqlResolved=('project = %s AND resolved >= %s AND resolved <= %s ORDER BY created DESC, key DESC') % (project, firstDay, lastDay)
 
    countCreate = 0
    countResolved = 0
