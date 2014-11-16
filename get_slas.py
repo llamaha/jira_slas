@@ -11,7 +11,7 @@ global jiraCreated
 global jiraResolved
 
 # Specify JIRA authentication here.
-# This can be alternatively use a jira auth key or to load creds from a secure file.
+# This can alternatively use a jira auth key or to load creds from a secure file.
 # Look up jira-python documentation for more info.
 jiraUser = ''
 jiraPass = ''
