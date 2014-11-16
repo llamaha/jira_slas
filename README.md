@@ -3,7 +3,9 @@ jira_slas
 
 JIRA SLA reporting script that calculates business hours between created date and hours to first response and time to resolution.
 
-It's important that you set the custom fields in the script.  The custom fields are in the JSON data for the fields:
+It's important that you set the custom fields in the script, they are currently in the code as customfield_ (this will be improved).  The custom fields are in the JSON data for the fields:
+
+Severity
 
 Time of first response
 
