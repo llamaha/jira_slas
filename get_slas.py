@@ -4,7 +4,6 @@ from BusinessHours import BusinessHours
 import sys
 
 global jira
-global jiraURL
 global jiraUser
 global jiraPass
 global project
@@ -15,32 +14,57 @@ global jiraResolved
 jiraUser = ''
 jiraPass = ''
 project = ''
-jiraURL = ''
-def sla(severity,timeToRespond):
-   # Standard SLA times per severity 
-   sev1 = 4
-   sev2 = 8
-   sev345 = 24
-   # Determine whether SLA's were met
-   if (severity is not "Severity 1") and (severity is not "Severity 2") and \
-      timeToRespond < sev345:
-      slaMet = "yes"
-   elif severity == "Severity 1" and timeToRespond < sev1:
-      slaMet = "yes"
-   elif severity == "Severity 2" and timeToRespond < sev2:
-      slaMet = "yes"
-   else:
-      slaMet = "no"
-   return slaMet
 
-def getResults(firstDay, lastDay):
-   jira = JIRA(options={'server': jiraURL}, basic_auth=(jiraUser, jiraPass))
+def init_JIRA(firstDay, lastDay):
+   # Add server for your jira server, i.e. https://jira.business.com.au
+   jira = JIRA(options={'server': ''}, basic_auth=(jiraUser, jiraPass))
    # Only created and resolved dates are required for the queries
-   jqlCreated=('project = %s AND created >= %s AND created <= %s ORDER BY created DESC, key DESC') % (project, firstDay, lastDay)
-   jqlResolved=('project = %s AND resolved >= %s AND resolved <= %s ORDER BY created DESC, key DESC') % (project, firstDay, lastDay)
+   jqlCreated = ('project = %s AND created >= %s AND created <= %s ORDER BY created DESC, key DESC') % (project, firstDay, lastDay)
+   jqlResolved = ('project = %s AND resolved >= %s AND resolved <= %s ORDER BY created DESC, key DESC') % (project, firstDay, lastDay)
+   return (jira, jqlCreated, jqlResolved)
+
+def sla(severity, total_hours, slaType):
+   # Standard SLA times per severity 
+   if slaType == "response":
+      limits = {
+         'Severity 1':4,
+         'Severity 2':8,
+         'Severity 3':12,
+         'other': 24,
+      }
+   elif slaType == "resolution":
+      limits = {
+         'Severity 1':24,
+         'Severity 2':36,
+         'Severity 3':72,
+         'other':5000,
+      }
+   if severity not in limits:
+      severity = 'other'
+   if "None" in total_hours:
+      return 'n/a'
+   if int(total_hours) < limits[severity]:
+      return 'yes'
+   else:
+      return 'no'
+
+def parseCreated(created):
+   created = created.split('.')[0]
+   created = datetime.strptime(created, '%Y-%m-%dT%H:%M:%S')
+   return created
+
+def calcDuration(created, end_time):
+   totalDuration = BusinessHours(created,end_time)
+   totalDuration = totalDuration.gethours()
+   totalDuration = str(totalDuration)
+   totalDuration = totalDuration.split('.')[0]
+   return totalDuration
+
+def getCreated(firstDay, lastDay):
+   jira = init_JIRA(firstDay, lastDay)[0]
+   jqlCreated = init_JIRA(firstDay, lastDay)[1]
+   # Only created and resolved dates are required for the queries
    countCreate = 0
-   countResolved = 0
-   countOpen = 0
    print "%s - %s" % (firstDay, lastDay)
    print "Tickets created"
    print "Key,Summary,Severity,Hours until first response,SLA Met"
@@ -48,66 +72,62 @@ def getResults(firstDay, lastDay):
       jira_key = issue.key
       summary = issue.fields.summary
       severity = issue.fields.customfield_10030.value
-      if "," in jira_key or summary:
-         jira_key = jira_key.replace(',', '')
+      if "," in summary:
          summary = summary.replace(',', '')
       if issue.fields.created:
-         created = issue.fields.created.split('.')[0]
-         created = datetime.strptime(created, '%Y-%m-%dT%H:%M:%S')
+         created = parseCreated(issue.fields.created)
       else:
-         created = "None"
+         sys.exit('Missing created date from %s') % ' '.join(jira_key, summary)
       if issue.fields.customfield_11971:
          response = issue.fields.customfield_11971.split('.')[0]
          response = datetime.strptime(response, '%Y-%m-%d %H:%M:%S')
       else:
          response = "None"
       if response is not "None":
-         timeToRespond = BusinessHours(created,response)
-         timeToRespond = timeToRespond.gethours()
-         slaMet = sla(severity,timeToRespond)
-         timeToRespond = str(timeToRespond)
-         timeToRespond = timeToRespond.split('.')[0]
+         timeToRespond = calcDuration(created,response)
       else:
          timeToRespond = "No Response"
-         slaMet = "Unknown"
+      slaMet = sla(severity, timeToRespond, "response")
       countCreate+=1
-      print jira_key + "," + summary + "," + severity + "," + timeToRespond + "," + slaMet
+      print ','.join([jira_key, summary, severity, timeToRespond, slaMet])
    print "Created ticket count: [ %s ]\n" % countCreate
+
+def getResolved(firstDay, lastDay):
+   jira = init_JIRA(firstDay, lastDay)[0]
+   jqlResolved= init_JIRA(firstDay, lastDay)[2]
+   countResolved = 0
    print "Tickets resolved"
-   print "Key,Summary,Time until resolution"
+   print "Key,Summary,Time until resolution,SLA Met"
    for issue in jira.search_issues(jqlResolved):
       jira_key = issue.key
       summary = issue.fields.summary
-      if "," in jira_key or summary:
-         jira_key = jira_key.replace(',', '')
+      severity = issue.fields.customfield_10030.value
+      if "," in summary:
          summary = summary.replace(',', '')
       if issue.fields.created:
-         created = issue.fields.created.split('.')[0]
-         created = datetime.strptime(created, '%Y-%m-%dT%H:%M:%S')
+         created = parseCreated(issue.fields.created)
       else:
-         created = "None"
+         sys.exit('Missing created date from %s') % ' '.join(jira_key, summary)
       if issue.fields.customfield_10474:
          resolved = issue.fields.customfield_10474.split('.')[0]
          resolved = datetime.strptime(resolved, '%Y-%m-%dT%H:%M:%S')
       else:
          resolved = "None"
       if resolved is not "None":
-         timeToResolve = BusinessHours(created,resolved)
-         timeToResolve = timeToResolve.gethours()
-         timeToResolve = str(timeToResolve)
-         timeToResolve = timeToResolve.split('.')[0]
+         timeToResolve = calcDuration(created, resolved)
       else:
          timeToResolve = "None"
-      print jira_key + "," + summary + "," + timeToResolve
+      slaMet = sla(severity, timeToResolve, "resolution")
+      print ','.join([jira_key, summary, timeToResolve, slaMet])
       countResolved+=1
    print "Resolved ticket count: [ %s ]" % countResolved
 
 def customerList():
+   # If scheduling you'll probably want to configure these for current time -30d or something
    firstDay = raw_input('Please enter first day yyyy-mm-dd: >')
    lastDay = raw_input('Please enter last day yyyy-mm-dd: >')
-   firstDay = str(firstDay)
-   lastDay = str(lastDay)
-   getResults(firstDay, lastDay)
+   getCreated(firstDay, lastDay)
+   getResolved(firstDay, lastDay)
 
 if __name__ == "__main__":
    customerList()
