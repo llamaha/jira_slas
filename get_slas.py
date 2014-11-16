@@ -6,7 +6,7 @@ import sys
 global jira
 global jiraURL
 global jiraUser
-global jiraPasis
+global jiraPass
 global project
 global jiraCreated
 global jiraResolved
