@@ -24,4 +24,4 @@ The BusinessHours package installed via Pip (1.01) is currently broken so don't 
 
 _non_italic_word_part_
 non_italic_word_part
--t__test__
+-t __test__
