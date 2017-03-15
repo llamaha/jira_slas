@@ -22,3 +22,4 @@ https://github.com/dnel/BusinessHours
 
 The BusinessHours package installed via Pip (1.01) is currently broken so don't use it!
 _non_italic_word_part_
+non_italic_word_part
